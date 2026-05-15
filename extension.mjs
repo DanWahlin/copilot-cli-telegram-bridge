@@ -1185,31 +1185,17 @@ async function handleTelegramCommand(args, sessionId) {
     }
 }
 
-// Register /telegram as an SDK slash command via the wire protocol.
-// The SDK's joinSession doesn't expose the `commands` parameter, so we
-// send a follow-up session.resume with just the commands field. The server
-// merges this additively -- undefined fields are skipped.
-async function registerSlashCommand(sess) {
-    const commands = [{ name: "telegram", description: "Telegram bridge: setup, connect, disconnect, status, remove" }];
-    // Must include hooks:true to preserve hook registrations from joinSession.
-    // Without it, the server treats this as enableHooksCallback:false and removes
-    // the ad-hoc hooks that were just registered.
-    await sess.connection.sendRequest("session.resume", {
-        sessionId: sess.sessionId,
-        commands,
-        hooks: true,
-    });
-
-    sess.on("command.execute", (event) => {
-        const { requestId, commandName, args } = event.data;
-        if (commandName !== "telegram") return;
-        handleTelegramCommand(args, sess.sessionId)
-            .then(() => sess.rpc.commands.handlePendingCommand({ requestId }))
-            .catch(err => {
-                console.error("telegram-bridge: command error:", err.message);
-                sess.rpc.commands.handlePendingCommand({ requestId, error: err.message });
-            });
-    });
+// Register /telegram as an SDK slash command. Newer Copilot CLI SDKs store
+// command handlers from the `commands` array; registering metadata alone can
+// make `/telegram` fail at runtime with `Unknown command: telegram`.
+function createTelegramCommand() {
+    return {
+        name: "telegram",
+        description: "Telegram bridge: setup, connect, disconnect, status, remove",
+        handler: async ({ args = "", sessionId = session?.sessionId } = {}) => {
+            await handleTelegramCommand(args, sessionId);
+        },
+    };
 }
 
 // ============================================================
@@ -1284,6 +1270,7 @@ async function main() {
     cleanupTmpDir();
 
     session = await joinSession({
+        commands: [createTelegramCommand()],
         onUserInputRequest: createUserInputHandler(),
         hooks: {
             onUserPromptSubmitted: (input) => {
@@ -1336,8 +1323,6 @@ async function main() {
             },
         },
     });
-
-    await registerSlashCommand(session);
 
     const botCount = Object.keys(registry).length;
     if (botCount === 0) {

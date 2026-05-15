@@ -79,6 +79,8 @@ Access control is shared -- pairing with any bot grants access to all bots manag
 ## Troubleshooting
 
 - **Extension not loading** -- make sure you enabled the EXTENSIONS feature flag (`/experimental` in the CLI). Then verify the file exists at `~/.copilot/extensions/copilot-cli-telegram-bridge/extension.mjs`
+- **`/telegram` reports `Unknown command: telegram`** -- restart Copilot CLI after updating this extension. Older bridge versions registered only command metadata; newer Copilot CLI SDKs require a command handler to be registered with the command definition.
+- **Startup fails with `Invalid command format` mentioning `extension_bootstrap.mjs`** -- this indicates Copilot CLI launched the extension bootstrap through the `copilot` wrapper instead of Node. That failure is in the Copilot CLI extension host, not your Telegram token. As a local workaround, back up the Copilot CLI bundle and force the extension fork to use Node (for example `execPath: "/usr/bin/node"` in the `launchExtension()` fork options). Report it to the Copilot CLI maintainers if it persists after upgrading Copilot CLI.
 - **Bot not responding** -- check that the token is valid. Try `/telegram disconnect` then `/telegram connect` again
 - **Pairing code expired** -- codes expire after 5 minutes. Send a new message to the bot to get a fresh one
 - **"Another session has this bot"** -- the bot is locked by another CLI session. Connecting again takes it over
