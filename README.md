@@ -1,3 +1,6 @@
+> [!WARNING]
+> **Deprecated:** This provider-specific bridge is no longer maintained. Use [Agent Telegram Bridge](https://github.com/DanWahlin/agent-telegram-bridge), the shared ACP-based Telegram bridge for GitHub Copilot CLI, Grok Build, and future ACP-compatible agents.
+
 # Copilot CLI Telegram Bridge
 
 A GitHub Copilot CLI extension that bridges Telegram messages bidirectionally with a CLI session -- send messages from Telegram, get agent responses back.
